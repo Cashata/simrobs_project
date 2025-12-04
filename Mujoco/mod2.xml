@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco model="simple_wheeled_robot">
+  <!-- Настройки -->
+  <option timestep="0.005" integrator="RK4" cone="elliptic"/>
+
+  <!-- Статистика -->
+  <statistic center="0 0 0.5" extent="2"/>
+
+  <!-- Мир -->
+  <worldbody>
+    <!-- Пол -->
+    <light name="top" pos="0 0 3" dir="0 0 -1" directional="true"/>
+    <geom name="floor" type="plane" size="10 10 0.1" rgba="0.8 0.9 0.8 1" friction="1 0.005 0.0001"/>
+
+    <!-- Основание робота (кузов) -->
+    <body name="base" pos="0 0 0.3">
+      <freejoint name="base_joint"/>
+      <geom name="base_geom" type="box" size="0.15 0.08 0.1" mass="2.0" rgba="0.2 0.6 1 1"/>
+
+      <!-- Сайт для IMU -->
+      <site name="imu_site" pos="0 0 0.1" type="box" size="0.01 0.01 0.01" rgba="1 0 0 0.5"/>
+    </body>
+
+    <!-- Левое колесо - отдельное тело в мировом пространстве -->
+    <body name="left_wheel_body" pos="0 0.08 0.2">  <!-- 0.2 = 0.3 - 0.1 (высота основания - смещение) -->
+      <joint name="left_wheel_joint" type="hinge" axis="0 1 0" pos="0 0 0" limited="false"/>
+      <geom name="left_wheel_geom" type="cylinder" size="0.08 0.02"
+            euler="90 0 0" mass="0.5" rgba="0.3 0.3 0.3 1"/>
+      <site name="left_wheel_site" pos="0 0 0" type="sphere" size="0.01" rgba="0 1 0 0.5"/>
+    </body>
+
+    <!-- Правое колесо - отдельное тело в мировом пространстве -->
+    <body name="right_wheel_body" pos="0 -0.08 0.2">
+      <joint name="right_wheel_joint" type="hinge" axis="0 1 0" pos="0 0 0" limited="false"/>
+      <geom name="right_wheel_geom" type="cylinder" size="0.08 0.02"
+            euler="90 0 0" mass="0.5" rgba="0.3 0.3 0.3 1"/>
+      <site name="right_wheel_site" pos="0 0 0" type="sphere" size="0.01" rgba="0 1 0 0.5"/>
+    </body>
+  </worldbody>
+
+  <!-- Равенства (соединения) -->
+  <equality>
+    <!-- Соединяем левое колесо с основанием -->
+    <!-- anchor - точка на теле 1 (base), где происходит соединение -->
+    <weld name="weld_left_wheel" body1="base" body2="left_wheel_body"
+          anchor="0 0.08 -0.1"/>
+
+    <!-- Соединяем правое колесо с основанием -->
+    <weld name="weld_right_wheel" body1="base" body2="right_wheel_body"
+          anchor="0 -0.08 -0.1"/>
+  </equality>
+
+  <!-- Приводы -->
+  <actuator>
+    <!-- Двигатели колес -->
+    <motor name="left_wheel_motor" joint="left_wheel_joint" gear="50" ctrllimited="true" ctrlrange="-100 100"/>
+    <motor name="right_wheel_motor" joint="right_wheel_joint" gear="50" ctrllimited="true" ctrlrange="-100 100"/>
+  </actuator>
+
+  <!-- Датчики -->
+  <sensor>
+    <!-- Гироскоп и акселерометр -->
+    <gyro name="base_gyro" site="imu_site"/>
+    <accelerometer name="base_accel" site="imu_site"/>
+
+    <!-- Позиция и ориентация -->
+    <framepos name="base_pos" objtype="body" objname="base"/>
+    <framequat name="base_quat" objtype="body" objname="base"/>
+
+    <!-- Скорость колес -->
+    <jointvel name="left_wheel_joint_vel" joint="left_wheel_joint"/>
+    <jointvel name="right_wheel_joint_vel" joint="right_wheel_joint"/>
+  </sensor>
+</mujoco>
